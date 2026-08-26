@@ -1,0 +1,44 @@
+methods:
+  - name: greedy_full
+    solver: greedy
+    preposition_method: proposed
+    objective_overrides: {}
+
+  - name: alns_random_preposition
+    solver: alns
+    preposition_method: random
+    objective_overrides: {}
+
+  - name: alns_demand_preposition
+    solver: alns
+    preposition_method: demand_only
+    objective_overrides: {}
+
+  - name: alns_efficiency_only
+    solver: alns
+    preposition_method: proposed
+    objective_overrides:
+      gap_service_benefit: 0.0
+      social_welfare_benefit_weight: 0.0
+
+  - name: alns_gap_only
+    solver: alns
+    preposition_method: proposed
+    objective_overrides:
+      social_welfare_benefit_weight: 0.0
+
+  - name: proposed_full
+    solver: alns
+    preposition_method: proposed
+    objective_overrides: {}
+
+execution:
+  workers: 4
+  resume: true
+  scenario_count: 30
+  solver_seeds_per_scenario: 5
+  greedy_repeats_per_scenario: 1
+  retries: 1
+  thread_limit_per_process: 1
+  run_label: natural_30scenarios_5seeds
+  alns_overrides: {}

@@ -1,0 +1,145 @@
+# Copy this file to your project's configs/results_analysis.yaml.
+base_config: configs/base.yaml
+
+statistics:
+  bootstrap_repetitions: 5000
+  seed: 2026
+  alpha: 0.05
+
+demand_validation:
+  output_dir: outputs/paper_results/demand_validation
+  # Usually inherited from base.yaml:
+  # zone_panel_test: data/processed/model_inputs/zone_panel_test.parquet
+  # trips_test: data/processed/model_inputs/survey_trips_test_routed.parquet
+  # forecast_dir: outputs/forecast_scenarios
+  # lightgbm_model: models/lightgbm/zone_demand_model.joblib
+  target_column: demand_rate_per_1000_households
+  zone_column: origin_zone_id
+  high_demand_quantile: 0.80
+  target_time_bin: 630
+  target_day_code: 3
+  top_zone_plot_count: 30
+
+prepositioning_evaluation:
+  output_dir: outputs/paper_results/chapter5_prepositioning
+  scenario_metrics: outputs/metrics/scenario_level_metrics.csv
+
+  # Three prepositioning strategies actually implemented in the formal experiments.
+  # proposed_full uses the proposed gap-and-vulnerability-weighted prepositioning
+  # together with the full ALNS routing objective. It is not labelled as DRO.
+  method_map:
+    Random: alns_random_preposition
+    Expected-demand: alns_demand_preposition
+    Gap-and-vulnerability-weighted: proposed_full
+
+  reference_method: proposed_full
+  fallback_reference_method: proposed_full
+  expected_method: alns_demand_preposition
+
+  metrics:
+    - service_rate
+    - gap_service_rate
+    - pickup_delay_mean_sec
+    - pickup_delay_p90_sec
+    - door_to_door_mean_sec
+    - door_to_door_p90_sec
+    - ride_time_mean_sec
+
+routing_equity:
+  output_dir: outputs/paper_results/chapter5_routing
+  experiments_config: configs/experiments.yaml
+  reference_method: proposed_full
+  efficiency_baseline: alns_efficiency_only
+  equity_methods:
+    - alns_gap_only
+    - proposed_full
+  minimum_group_cell: 10
+
+  group_columns:
+    - is_gap
+    - is_low_income
+    - is_no_car
+    - is_older
+    - is_80plus
+    - is_disabled
+    - is_student
+    - sector_group
+    - gender_group
+    - age_group
+    - income_group
+    - vehicle_group
+
+  summary_metrics:
+    - service_rate
+    - gap_service_rate
+    - pickup_delay_mean
+    - door_time_mean
+    - distance_mean
+    - worst_group_service_rate
+    - max_min_service_gap
+    - jain_service_index
+    - theil_service_index
+
+paper_outputs:
+  output_dir: outputs/paper_results
+  multimodal_dir: outputs/chapter5_multimodal
+
+experiment_requirements:
+  - paper_label: Random
+    method_name: alns_random_preposition
+    section: "5.2 RQ1"
+    claim_type: prepositioning
+    notes: Random legal-road vehicle locations with full ALNS routing.
+
+  - paper_label: Expected-demand
+    method_name: alns_demand_preposition
+    section: "5.2 RQ1"
+    claim_type: prepositioning
+    notes: Predicted-demand placement without service-gap or vulnerability weighting.
+
+  - paper_label: Gap-and-vulnerability-weighted
+    method_name: proposed_full
+    section: "5.2 RQ1"
+    claim_type: prepositioning
+    notes: Predicted demand adjusted by the prespecified service-gap and vulnerability weights.
+
+  - paper_label: Greedy full
+    method_name: greedy_full
+    section: "5.3 RQ2"
+    claim_type: search_baseline
+    notes: Greedy feasible insertion with the full gap and social-welfare objective terms.
+
+  - paper_label: Efficiency-only ALNS
+    method_name: alns_efficiency_only
+    section: "5.3 RQ2"
+    claim_type: routing_ablation
+    notes: Gap and welfare objective terms disabled.
+
+  - paper_label: Gap-only ALNS
+    method_name: alns_gap_only
+    section: "5.3 RQ2"
+    claim_type: routing_ablation
+    notes: Gap term active and social-welfare term disabled.
+
+  - paper_label: Proposed full
+    method_name: proposed_full
+    section: "5.3 RQ2"
+    claim_type: routing
+    notes: Proposed weighted prepositioning with the full selective equity-aware ALNS objective.
+
+required_outputs:
+  - section: "5.1 Demand-model and Scenario Validation"
+    description: Held-out prediction and scenario-fidelity tables
+    pattern: outputs/paper_results/demand_validation/*.csv
+
+  - section: "5.2 RQ1 Prepositioning"
+    description: Three-method prepositioning comparison and significance tests
+    pattern: outputs/paper_results/chapter5_prepositioning/paper_table_prepositioning.csv
+
+  - section: "5.3 RQ2 Routing and Equity"
+    description: Overall, subgroup, fairness and price-of-fairness results
+    pattern: outputs/paper_results/chapter5_routing/paper_table_routing_equity.csv
+
+  - section: "DRT versus walking/GTFS"
+    description: Common-request multimodal evaluation
+    pattern: outputs/chapter5_multimodal/*.csv

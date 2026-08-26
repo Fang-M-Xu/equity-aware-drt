@@ -1,0 +1,200 @@
+project:
+  name: sidre_drt_jerusalem
+  seed: 2026
+  timezone: Asia/Jerusalem
+  source_crs: EPSG:2039
+  target_crs: EPSG:4326
+  metric_crs: EPSG:2039
+
+paths:
+  experiment_data_dir: data/processed/experiment_data
+  building_master: data/processed/experiment_data/building_master.parquet
+  household_home_master: data/processed/experiment_data/household_home_master.parquet
+  household_split_manifest: data/processed/experiment_data/household_split_manifest.parquet
+  dwell_train: data/processed/experiment_data/dwell_events_train.parquet
+  dwell_validation: data/processed/experiment_data/dwell_events_validation.parquet
+  dwell_test: data/processed/experiment_data/dwell_events_test.parquet
+  trips_train: data/processed/experiment_data/survey_trips_train.parquet
+  trips_validation: data/processed/experiment_data/survey_trips_validation.parquet
+  trips_test: data/processed/experiment_data/survey_trips_test.parquet
+  trips_train_routed: data/processed/model_inputs/survey_trips_train_routed.parquet
+  trips_validation_routed: data/processed/model_inputs/survey_trips_validation_routed.parquet
+  trips_test_routed: data/processed/model_inputs/survey_trips_test_routed.parquet
+  zone_panel_train: data/processed/model_inputs/zone_panel_train.parquet
+  zone_panel_validation: data/processed/model_inputs/zone_panel_validation.parquet
+  zone_panel_test: data/processed/model_inputs/zone_panel_test.parquet
+  zone_static_features: data/processed/model_inputs/zone_static_features.parquet
+  zones: data/raw/spatial/Jerusalem_90_zones.shp
+  roads: data/raw/network/jerusalem_roads.geojson
+  lightgbm_model: models/lightgbm/zone_demand_model.joblib
+  transformer_model: models/transformer/activity_trip_transformer.pt
+  transformer_vocabulary: models/transformer/vocabulary.json
+  transformer_profile_schema: models/transformer/profile_schema.json
+  forecast_dir: outputs/forecast_scenarios
+  candidate_points: outputs/prepositioning/waiting_candidates.parquet
+  preposition_dir: outputs/prepositioning
+  operating_dir: outputs/operating_scenarios
+  alns_dir: outputs/alns
+  benchmark_dir: outputs/benchmarks
+  metrics_dir: outputs/metrics
+  paper_results_dir: outputs/paper_results
+  statistics_dir: outputs/statistics
+  cache_db: cache/routing_cache.sqlite
+
+routing:
+  valhalla_base_url: http://localhost:8002
+  timeout_sec: 90
+  max_retries: 4
+  retry_backoff_sec: 2.0
+  matrix_max_sources: 50
+  matrix_max_targets: 50
+  matrix_max_pairs: 2500
+  route_workers: 8
+  costing_auto: auto
+  costing_walk: pedestrian
+  allow_fallback_speed: false
+  fallback_drive_speed_kph: 28.0
+  fallback_walk_speed_kph: 4.5
+  roads_source_crs: null
+  snap_max_distance_m: 150.0
+
+survey_time:
+  bin_minutes: 30
+  estimate_departure_from_direct_drive: true
+
+zone_panel:
+  zone_id_column_in_shapefile: TAZ_1270
+  target_column: demand_rate_per_1000_households
+  include_all_time_bins: true
+  all_day_codes: null
+
+lightgbm:
+  objective: poisson
+  num_leaves: 31
+  learning_rate: 0.03
+  n_estimators: 2500
+  min_child_samples: 20
+  subsample: 0.9
+  colsample_bytree: 0.9
+  reg_alpha: 0.1
+  reg_lambda: 0.1
+  early_stopping_rounds: 120
+
+  categorical_features:
+    - origin_zone_id
+    - survey_day_of_week_code
+
+  use_exposure_weights: true
+  exposure_column: day_household_count
+
+  eval_metrics:
+    - poisson
+    - l1
+
+  top_k_values:
+    - 5
+    - 10
+
+  log_period: 50
+  evaluate_test_by_default: false
+
+transformer:
+  max_sequence_length: 12
+  d_model: 128
+  n_heads: 4
+  n_layers: 3
+  dim_feedforward: 256
+  dropout: 0.10
+  batch_size: 128
+  epochs: 80
+  patience: 10
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  duration_bin_minutes: 5
+  max_duration_minutes: 60
+  sampling_temperature: 0.9
+  top_k: 8
+
+scenario:
+  departure_time: "10:30:00"
+  departure_bin_minute: 630
+  day_of_week_code: 3
+  total_requests: 40
+  number_of_scenarios: 30
+  minimum_od_distance_m: 250.0
+  maximum_sampling_attempts: 50
+  gap_share_override: null
+
+vehicle:
+  fleet_size: 30
+  capacity: 8
+  unique_preposition_points: 30
+  return_to_depot: false
+
+prepositioning:
+  candidate_spacing_m: 300.0
+  candidate_dedup_grid_m: 100.0
+  max_candidates_per_zone: 10
+  restrict_to_forecast_zones: true
+  road_class_column: null
+  allowed_road_classes: []
+  excluded_road_classes:
+  - motorway
+  - motorway_link
+  - trunk
+  - trunk_link
+  - primary_link
+  - secondary_link
+  - tertiary_link
+  - pedestrian
+  - footway
+  - cycleway
+  - steps
+  - path
+  - bridleway
+  - construction
+
+  validate_with_valhalla: false
+  gap_weight: 2.0
+  vulnerability_weight: 1.0
+
+constraints:
+  max_pickup_delay_sec: 300.0
+  max_access_walk_m: 300.0
+  max_egress_walk_m: 300.0
+  max_door_to_door_sec: 900.0
+  max_ride_time_ratio: 2.0
+  max_ride_time_additive_sec: 300.0
+
+alns:
+  iterations: 5000
+  time_limit_sec: 120.0
+  reaction_factor: 0.20
+  segment_length: 100
+  cooling_rate: 0.9995
+  initial_temperature_fraction: 0.05
+  destroy_fraction_min: 0.10
+  destroy_fraction_max: 0.35
+  score_global_best: 8.0
+  score_improved: 4.0
+  score_accepted: 1.0
+
+objective:
+  travel_time_weight: 1.0
+  empty_time_weight: 1.0
+  wait_time_weight: 2.0
+  ride_time_weight: 1.0
+  unserved_penalty: 10000.0
+  gap_service_benefit: 5000.0
+  social_welfare_benefit_weight: 1000.0
+
+otp:
+  enabled: true
+  graphql_endpoint: http://localhost:8080/otp/gtfs/v1
+  timeout_sec: 90
+  departure_datetime: "2026-05-06T10:30:00+03:00"
+  first_itineraries: 5
+
+experiments:
+  scenario_seeds: 30
+  solver_seeds_per_scenario: 10

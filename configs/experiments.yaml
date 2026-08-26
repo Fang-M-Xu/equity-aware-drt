@@ -1,0 +1,60 @@
+methods:
+  - name: greedy_full
+    solver: greedy
+    preposition_method: proposed
+    objective_overrides: {}
+
+  - name: alns_random_preposition
+    solver: alns
+    preposition_method: random
+    objective_overrides: {}
+
+  - name: alns_demand_preposition
+    solver: alns
+    preposition_method: demand_only
+    objective_overrides: {}
+
+  - name: alns_efficiency_only
+    solver: alns
+    preposition_method: proposed
+    objective_overrides:
+      gap_service_benefit: 0.0
+      social_welfare_benefit_weight: 0.0
+
+  - name: alns_gap_only
+    solver: alns
+    preposition_method: proposed
+    objective_overrides:
+      social_welfare_benefit_weight: 0.0
+
+  - name: proposed_full
+    solver: alns
+    preposition_method: proposed
+    objective_overrides: {}
+
+execution:
+  # Four independent Python processes are usually a safe starting point.
+  # Reduce to 2 when RAM is limited; increase only after checking CPU/RAM.
+  workers: 4
+
+  # A matching .done marker is skipped when the script is rerun.
+  resume: true
+
+  # Formal design: 30 common realized scenarios and 5 paired ALNS seeds.
+  scenario_count: 30
+  solver_seeds_per_scenario: 5
+
+  # Greedy is deterministic for fixed inputs, so one run per scenario is enough.
+  greedy_repeats_per_scenario: 1
+
+  # Retry a failed child process once.
+  retries: 1
+
+  # Prevent NumPy/BLAS inside each child from creating extra nested threads.
+  thread_limit_per_process: 1
+
+  # Progress, markers, per-run configs and logs use this separate directory.
+  run_label: formal_30scenarios_5seeds
+
+  # No ALNS budget reduction here. The values in configs/base.yaml are retained.
+  alns_overrides: {}

@@ -1,0 +1,30 @@
+# One-factor-at-a-time sensitivity design.
+#
+# Baseline values are read dynamically from:
+#   configs/base_competitive.yaml
+#
+# Current competitive baseline:
+#   fleet_size: 12
+#   gap_service_benefit: 5000
+#   social_welfare_benefit_weight: 1000
+#   max_pickup_delay_sec: 300
+#   max_door_to_door_sec: 900
+#   iterations: 5000
+
+mode: ofat
+
+alternatives:
+
+  # Baseline = 35 vehicles.
+  # Tests both undersupply and higher-fleet conditions.
+  fleet_size: [15, 25]
+
+  gap_service_benefit: [0.0, 10000.0]
+
+  social_welfare_benefit_weight: [0.0, 2000.0]
+
+  max_pickup_delay_sec: [180.0, 420.0]
+
+  max_door_to_door_sec: [720.0, 810.0]
+
+  iterations: [2500, 10000]

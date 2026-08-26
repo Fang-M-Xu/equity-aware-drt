@@ -1,0 +1,84 @@
+project:
+  seed: 2026
+  base_dir: ".."  # resolve all relative paths from the project root
+  source_crs: "EPSG:2039"
+  geographic_crs: "EPSG:4326"
+
+paths:
+  stops: "data/survey/stops_buildings_Jerusalem.csv"
+  persons: "data/survey/pertype2.csv"
+  households: "data/survey/hhtype.csv"
+  person_dictionary: "data/survey/pertype_dic.csv"
+  household_dictionary: "data/survey/hhtype_dic.csv"
+  building_poi: "data/spatial/Jerusalem_building_POI.xlsx"
+  taz_accessibility: "data/spatial/Jerusalem_TAZ_Accessibility.xlsx"
+  taz_polygons: "data/spatial/Jerusalem_90_zones.shp"
+  output_dir: "data/processed/experiment_data"
+
+zone_assignment:
+  mode: "polygon"  # polygon is required for the official experiment
+  polygon_zone_column: "TAZ_1270"
+  accessibility_zone_column: "TAZ_1270"
+  nearest_fallback_max_distance_m: 10.0
+  # Only for QA/testing when the polygon file is temporarily unavailable:
+  crosswalk_path: null
+  crosswalk_building_column: "building_id"
+  crosswalk_zone_column: "zone_id"
+
+poi:
+  primary_poi_max_distance_m: 100.0
+  nearby_poi_radius_m: 100.0
+  compute_nearby_poi_summary: true
+
+quality:
+  max_observation_to_building_distance_m: 100.0
+  minimum_od_distance_m: 10.0
+  require_zone_for_model_ready: true
+  require_gap_label_for_model_ready: true
+  require_building_match_quality_for_model_ready: true
+
+split:
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  test_ratio: 0.15
+  stratify_by_sector_and_gap: true
+
+outputs:
+  write_csv: true
+  write_gpkg: true
+
+value_mappings:
+  sector:
+    1: "Arab"
+    2: "Ultra-Orthodox"
+    3: "Secular"
+    7: "Other_or_unknown"
+    0: "Missing"
+  gender:
+    1: "Male"
+    2: "Female"
+    0: "Missing"
+  income:
+    1: "Below_25K"
+    2: "25K_to_50K"
+    3: "50K_to_75K"
+    4: "75K_to_99K"
+    5: "100K_or_more"
+    9: "Refused"
+  disability_yes_codes: [1]
+  disability_no_codes: [2]
+  student_yes_codes: [1, 2]
+  student_no_codes: [3]
+  employed_yes_codes: [1, 2, 3, 4]
+  employed_no_codes: [5]
+  car_license_yes_codes: [1]
+  car_license_no_codes: [2]
+  transit_pass_yes_codes: [1, 2]
+  transit_pass_no_codes: [3]
+
+welfare:
+  low_income_weight: 1.0
+  no_car_weight: 1.0
+  disability_weight: 1.0
+  older_weight: 1.0
+  student_weight: 0.5
